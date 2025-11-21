@@ -1,4 +1,4 @@
-;;; elisp-depend.el --- Parse depend libraries of elisp file.
+;;; elisp-depend.el --- Parse depend libraries of elisp file. -*-lexical-binding: t-*-
 
 ;; Copyright (C) 2009  Andy Stewart
 ;; Copyright (C) 2010-2012 Tom Breton
@@ -73,7 +73,7 @@
 
 ;;;; Customize:
 ;;
-;; `elisp-depend-directory-list' the install directory of emacs.
+;; `elisp-depend-directory-list' the install directory of Emacs.
 ;; Or you can add others directory that you want filter.
 ;;
 ;; All of the above can customize by:
@@ -127,6 +127,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'view)                         ; use: `view-exit-action'
 
 ;;; Options
 
@@ -138,15 +139,16 @@
 ;;;###autoload
 (defcustom elisp-depend-directory-list '("/usr/share/emacs/")
   "List of directories that search should ignore."
-  :type 'list
+  :type '(repeat string)
   :group 'elisp-depend)
 
 ;;; Commands
 
+
 ;;;###autoload
 (defun elisp-depend-print-dependencies (&optional built-in)
   "Print library dependencies of the current buffer.
-With prefix argument, don't include built-in libraries.
+With BUILT-IN prefix argument, don't include built-in libraries.
 Every library that has a parent directory in
 `elisp-depend-directory-list' is considered built-in."
   (interactive "P")
@@ -172,7 +174,7 @@ Every library that has a parent directory in
 
 ;;;###autoload
 (defun elisp-depend-insert-require ()
-  "Insert a block of (require sym) or 'autoload statements into an elisp file."
+  "Insert a block of (require sym) or autoload statements into an elisp file."
   (interactive)
   (let ((deps (elisp-depend-map))
         library-name)
@@ -203,7 +205,7 @@ Every library that has a parent directory in
 ;;; Functions
 
 (defun elisp-depend-read-tree (&optional buffer)
-  "Return the tree given by reading the buffer as elisp.
+  "Return the tree given by reading the BUFFER as elisp.
 The top level is presented as a list, as if the buffer contents had been
 \(list CONTENTS...\)"
   (let ((tree '()))
@@ -223,7 +225,7 @@ The top level is presented as a list, as if the buffer contents had been
 ;; Borrowed from format
 (defun elisp-depend-proper-list-p (list)
   "Return t if LIST is a proper list.
-A proper list is a list ending with a nil cdr, not with an atom "
+A proper list is a list ending with a nil cdr, not with an atom"
   (when (listp list)
     (while (consp list)
       (setq list (cdr list)))
@@ -283,8 +285,8 @@ are mentioned in them."
 
     (let elisp-depend-let-form->sym-list)
     (let* elisp-depend-let-form->sym-list))
-  "Alist of symbols to expand specially, mapping from symbol to
-explore function.  Explore functions take one argument, a sexp, and
+  "Alist of symbols to expand specially, mapping symbol to explore function.
+Explore functions take one argument, a sexp, and
 return a list of symbols.")
 
 (defun elisp-depend-sexp->sym-list (sexp)
@@ -313,7 +315,10 @@ This function does not expand macros."
 
 ;; Translate symbols to requirements
 
-(defun elisp-depend-sym-list->dependencies (sym-list current-filename built-in see-vars)
+(defun elisp-depend-sym-list->dependencies (sym-list
+                                            current-filename
+                                            built-in
+                                            see-vars)
   ""
   (let ((symbol-seen '())
         (dependencies '()))
@@ -366,8 +371,7 @@ Return depend map as format: (filepath symbol-A symbol-B symbol-C)."
      nil)))
 
 (defun elisp-depend-get-load-history-line (path-sans-ext extension)
-  "Return line in load-history correspoding to PATH-SANS-EXT with
-   EXTENSION.
+  "Return line in `load-history' corresponding to PATH-SANS-EXT with EXTENSION.
 Return nil if there is none."
   (assoc (concat path-sans-ext extension)
          load-history))
